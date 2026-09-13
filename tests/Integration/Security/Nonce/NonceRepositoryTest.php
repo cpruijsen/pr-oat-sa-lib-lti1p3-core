@@ -47,7 +47,7 @@ class NonceRepositoryTest extends TestCase
     {
         $this->assertNull($this->subject->find('nonce'));
 
-        $this->cache->set('lti1p3-nonce-nonce', 'nonce');
+        $this->cache->set('lti1p3-nonce-bm9uY2U', 'nonce');
 
         $nonce = $this->subject->find('nonce');
 
@@ -57,13 +57,25 @@ class NonceRepositoryTest extends TestCase
 
     public function testSave(): void
     {
-        $this->assertFalse($this->cache->has('lti1p3-nonce-nonce'));
+        $this->assertFalse($this->cache->has('lti1p3-nonce-bm9uY2U'));
 
         $nonce = new Nonce('nonce');
 
         $this->subject->save($nonce);
 
-        $this->assertTrue($this->cache->has('lti1p3-nonce-nonce'));
-        $this->assertEquals('nonce', $this->cache->get('lti1p3-nonce-nonce'));
+        $this->assertTrue($this->cache->has('lti1p3-nonce-bm9uY2U'));
+        $this->assertEquals('nonce', $this->cache->get('lti1p3-nonce-bm9uY2U'));
+    }
+
+    public function testSaveAndFindWithReservedCharacters(): void
+    {
+        $nonce = new Nonce('nonce{}()/\@:value');
+
+        $this->subject->save($nonce);
+
+        $result = $this->subject->find('nonce{}()/\@:value');
+
+        $this->assertInstanceOf(NonceInterface::class, $result);
+        $this->assertEquals('nonce{}()/\@:value', $result->getValue());
     }
 }

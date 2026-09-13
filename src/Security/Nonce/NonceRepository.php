@@ -42,7 +42,7 @@ class NonceRepository implements NonceRepositoryInterface
      */
     public function find(string $value): ?NonceInterface
     {
-        $item = $this->cache->getItem(sprintf('%s-%s', self::CACHE_PREFIX, $value));
+        $item = $this->cache->getItem($this->getNonceCacheKey($value));
 
         return $item->isHit() ? new Nonce($item->get()) : null;
     }
@@ -52,10 +52,19 @@ class NonceRepository implements NonceRepositoryInterface
      */
     public function save(NonceInterface $nonce): void
     {
-        $item = $this->cache->getItem(sprintf('%s-%s', self::CACHE_PREFIX, $nonce->getValue()));
+        $item = $this->cache->getItem($this->getNonceCacheKey($nonce->getValue()));
 
         $this->cache->save(
             $item->set($nonce->getValue())->expiresAt($nonce->getExpiredAt())
+        );
+    }
+
+    private function getNonceCacheKey(string $value): string
+    {
+        return sprintf(
+            '%s-%s',
+            self::CACHE_PREFIX,
+            str_replace('=', '', strtr(base64_encode($value), '+/', '-_'))
         );
     }
 }
