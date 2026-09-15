@@ -59,12 +59,18 @@ class NonceRepository implements NonceRepositoryInterface
         );
     }
 
+    /**
+     * PSR-6 reserves {}()/\@: in a key and only guarantees support up to 64 characters. A nonce is
+     * supplied by the platform, so it can carry either problem. Hashing settles both at once: the
+     * digest is fixed length, so the key is always 56 characters whatever arrives, and base64url
+     * of it uses none of the reserved characters.
+     */
     private function getNonceCacheKey(string $value): string
     {
         return sprintf(
             '%s-%s',
             self::CACHE_PREFIX,
-            str_replace('=', '', strtr(base64_encode($value), '+/', '-_'))
+            rtrim(strtr(base64_encode(hash('sha256', $value, true)), '+/', '-_'), '=')
         );
     }
 }
